@@ -284,12 +284,16 @@ function escapeHtml(s) {
 buildJobs();
 renderCurve();
 
-const stream = new EventSource("/events");
-stream.onmessage = (msg) => {
-  const ev = JSON.parse(msg.data);
+function dispatch(ev) {
   const fn = handlers[ev.kind];
   if (fn) fn(ev.data);
-};
+}
+
+// Exposed so the screenshot harness can replay a recorded run into the page.
+window.__handle = dispatch;
+
+const stream = new EventSource("/events");
+stream.onmessage = (msg) => dispatch(JSON.parse(msg.data));
 
 $("run").addEventListener("click", async () => {
   $("run").disabled = true;

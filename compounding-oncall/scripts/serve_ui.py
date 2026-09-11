@@ -120,6 +120,14 @@ async def run_incidents() -> None:
     metrics.save(config.METRICS_FILE)
     BUS.emit("done", layer_line=config.stub_summary(), **summary)
 
+    # Persist the event log so the deck's screenshots can be regenerated from a
+    # real run rather than mocked up.
+    events_file = config.STATE_DIR / "events.json"
+    events_file.parent.mkdir(parents=True, exist_ok=True)
+    events_file.write_text(
+        json.dumps([{"kind": e.kind, "data": e.data} for e in BUS.history], indent=2)
+    )
+
 
 # --------------------------------------------------------------------------
 # HTTP, hand-rolled on asyncio streams

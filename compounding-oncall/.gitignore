@@ -8,3 +8,5 @@ report.html
 .pytest_cache/
 .venv/
 venv/
+.DS_Store
+docs/img/

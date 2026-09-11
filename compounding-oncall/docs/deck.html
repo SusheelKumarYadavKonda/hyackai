@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Compounding On-Call — deck</title>
+<style>
+:root{
+  --bg:#0d1014; --panel:#14181e; --panel2:#1a1f27; --line:#252c36;
+  --ink:#e6e9ee; --muted:#8b95a4; --dim:#5d6875;
+  --cold:#e8833a; --warm:#35c88a; --red:#f0524d; --blue:#4c9ef0; --violet:#a97bf0;
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#06080a;color:var(--ink);
+  font:15px/1.6 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif}
+
+.slide{
+  width:1280px;height:720px;margin:22px auto;padding:52px 60px;
+  background:var(--bg);border:1px solid var(--line);border-radius:12px;
+  position:relative;overflow:hidden;display:flex;flex-direction:column;
+}
+.n{position:absolute;right:26px;bottom:20px;font:600 11px/1 var(--mono);color:var(--dim)}
+h1{font-size:44px;letter-spacing:-.02em;line-height:1.1;font-weight:680}
+h2{font-size:30px;letter-spacing:-.015em;margin-bottom:6px;font-weight:660}
+.kicker{font:650 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--warm);margin-bottom:18px}
+.sub{color:var(--muted);font-size:17px;margin-top:14px;max-width:62ch}
+.lead{font-size:20px;line-height:1.5;max-width:66ch}
+.dim{color:var(--dim)}
+b.hi{color:var(--warm)}
+b.warn{color:var(--cold)}
+code{font-family:var(--mono);font-size:.92em;background:var(--panel2);
+  padding:2px 6px;border-radius:4px}
+
+.rule{height:1px;background:var(--line);margin:20px 0}
+.grid{display:grid;gap:14px;margin-top:8px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g5{grid-template-columns:repeat(5,1fr)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:16px 18px}
+.card h3{font:650 12px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;
+  color:var(--warm);margin-bottom:9px}
+.card p{font-size:14px;color:var(--muted);line-height:1.5}
+.card.q h3{color:var(--blue)}
+
+table{width:100%;border-collapse:collapse;font:13.5px/1.5 var(--mono);margin-top:10px}
+th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);
+  font:650 10px/1 var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--dim)}
+td{padding:8px 6px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+.cold{color:var(--cold);font-weight:680}
+.warm{color:var(--warm);font-weight:680}
+.right{text-align:right}
+
+pre{background:var(--panel);border:1px solid var(--line);border-radius:9px;
+  padding:16px 18px;font:12.5px/1.65 var(--mono);color:var(--muted);overflow:hidden}
+pre .a{color:var(--warm)}
+pre .b{color:var(--blue)}
+pre .c{color:var(--cold)}
+pre .r{color:var(--red)}
+pre .v{color:var(--violet)}
+pre .w{color:var(--ink)}
+
+.bars{margin-top:20px}
+.bar{margin-bottom:16px}
+.bl{display:flex;justify-content:space-between;font:13px/1 var(--mono);
+  color:var(--muted);margin-bottom:7px}
+.bt{height:16px;background:var(--panel2);border-radius:4px;overflow:hidden}
+.bt i{display:block;height:100%;border-radius:4px}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:auto}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:14px 16px}
+.kpi span{display:block;font:650 9.5px/1 var(--mono);letter-spacing:.08em;
+  text-transform:uppercase;color:var(--dim);margin-bottom:7px}
+.kpi b{font:680 26px/1 var(--mono)}
+
+ul.tight{list-style:none;margin-top:14px}
+ul.tight li{padding:7px 0 7px 20px;position:relative;color:var(--muted);font-size:15px}
+ul.tight li::before{content:"";position:absolute;left:2px;top:15px;
+  width:5px;height:5px;border-radius:50%;background:var(--warm)}
+ul.tight li b{color:var(--ink)}
+
+.note{border-left:2px solid var(--line);padding:4px 0 4px 14px;color:var(--dim);
+  font-size:13.5px;margin-top:14px}
+
+.center{justify-content:center;align-items:flex-start}
+.foot{margin-top:auto;padding-top:18px;border-top:1px solid var(--line);
+  color:var(--dim);font-size:13px}
+
+@media print{
+  body{background:#fff}
+  .slide{margin:0;border:0;border-radius:0;page-break-after:always;
+    width:100%;height:100vh}
+}
+@page{size:1280px 720px;margin:0}
+</style>
+</head>
+<body>
+
+<!-- 1 ---------------------------------------------------------------->
+<section class="slide center">
+  <div class="kicker">Data &amp; AI Hackathon · From Memory to Muscle Memory</div>
+  <h1>Compounding On&#8209;Call</h1>
+  <p class="sub">An incident-response agent for data pipelines that stops
+     re&#8209;diagnosing the same failure. It reasons once, remembers, and gets
+     measurably faster every time the same fault reappears.</p>
+  <div class="kpis">
+    <div class="kpi"><span>incidents</span><b>6/6</b></div>
+    <div class="kpi"><span>replay speedup</span><b class="warm">249×</b></div>
+    <div class="kpi"><span>tokens on replay</span><b class="warm">0</b></div>
+    <div class="kpi"><span>services live</span><b>4</b></div>
+  </div>
+  <div class="n">1</div>
+</section>
+
+<!-- 2 ---------------------------------------------------------------->
+<section class="slide">
+  <div class="kicker">The problem</div>
+  <h2>The knowledge exists. It just isn't actionable.</h2>
+  <p class="lead" style="margin-top:16px">
+    A column gets renamed in an upstream CDC source. Three hops downstream a mart
+    starts producing nulls, a job fails its NOT NULL assertion, and someone
+    on&#8209;call spends 45 minutes rediscovering a causal chain a colleague
+    already traced last month.</p>
+  <p class="lead" style="margin-top:14px;color:var(--muted)">
+    The postmortem gets written. It goes in a wiki. Nobody reads it. Six weeks
+    later a <b class="hi">different table</b> fails the <b class="hi">same
+    way</b> and the 45 minutes are spent again.</p>
+  <div class="note" style="margin-top:26px">
+    From our own synthetic corpus — <code>pm_inventory_repeat.md</code>:
+    “The fix was already written down. The cost was not the diagnosis, it was
+    that nobody could find the previous diagnosis.”</div>
+  <div class="foot">Agents that are smart once and forgetful forever. That is the
+     gap we set out to close.</div>
+  <div class="n">2</div>
+</section>
+
+<!-- 3 ---------------------------------------------------------------->
+<section class="slide">
+  <div class="kicker">What we built</div>
+  <h2>A real trigger, not a simulated one</h2>
+  <pre style="margin-top:18px">
+<span class="w">scripts/run_job.py --table orders</span>          <span class="dim">a genuine subprocess</span>
+  reads Parquet, asserts NOT NULL + row-count minimums
+  <span class="r">fails → real stderr, exit 1</span>
+        │
+        ▼
+<span class="w">supervisor</span> catches returncode != 0, captures stderr verbatim
+        │
+        ▼
+<span class="w">signature(error_text)</span>   <span class="dim">strip timestamps, paths, counts, table name</span>
+        │
+        ▼
+   <span class="a">muscle memory: seen this shape before?</span>
+   ├── <span class="a">HIT</span>  → replay the captured path · 0 tokens · skip to verify
+   └── <span class="c">MISS</span> → lineage · cognee · hydradb · hotdata · rocketride
+        │
+        ▼
+<span class="w">verify</span>: re-run the real job, expect <span class="a">exit 0</span>
+        │
+        ▼
+<span class="w">learn</span>: capture path · record outcome · write narrative back</pre>
+  <div class="note">Both the trigger and the verify are real processes. PASS means
+     a subprocess exited 0 — not that the agent asserted success.</div>
+  <div class="n">3</div>
+</section>
+
+<!-- 4 ---------------------------------------------------------------->
+<section class="slide">
+  <div class="kicker">Architecture</div>
+  <h2>Five layers, five different questions</h2>
+  <div class="grid g5" style="margin-top:20px">
+    <div class="card"><h3>Muscle</h3><p>Signature&#8209;keyed path store.
+      A hit is a dict lookup — which is <b>why replay is zero tokens</b>, not
+      fewer.</p></div>
+    <div class="card"><h3>Cognee</h3><p>Runbooks and postmortems → knowledge
+      graph. <b>What the org knew before we started.</b></p></div>
+    <div class="card"><h3>HydraDB</h3><p>Accumulating resolution memory.
+      <b>What we have learned since.</b></p></div>
+    <div class="card"><h3>hotdata</h3><p>Live SQL over the warehouse.
+      <b>What is wrong right now.</b> Never cached.</p></div>
+    <div class="card"><h3>RocketRide</h3><p>Chains the remediation:
+      quarantine → rerun → notify. <b>Acts.</b></p></div>
+  </div>
+  <div class="rule"></div>
+  <h3 style="font:650 12px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--blue);margin-bottom:10px">
+    Why three memory layers</h3>
+  <p style="color:var(--muted);font-size:15px;max-width:74ch">
+    They answer questions on different time horizons, so action selection is a
+    precedence chain: <b class="hi">a fix we have proven</b> beats
+    <b class="hi">a fix the runbooks prescribe</b> beats a built&#8209;in
+    heuristic. Recall that never changes a decision is decoration; ours decides.</p>
+  <div class="note">Hard boundary: no Parquet&#8209;derived number is ever written
+     to a memory layer. Null rates go stale in hours; lineage is stable for weeks.</div>
+  <div class="n">4</div>
+</section>
+
+<!-- 5 ---------------------------------------------------------------->
+<section class="slide">
+  <div class="kicker">The UI · cold path</div>
+  <h2>Incident 1 — reasoning from scratch</h2>
+  <pre style="margin-top:16px">
+<span class="dim">INCIDENT 1 · job_orders_daily · table orders</span>                    <span class="c">COLD</span>
+
+ <span class="r">1</span>  Pipeline crashed      <span class="r">exit 1</span> — NOT NULL violated on customer_id:
+                          8000 nulls across 20000 rows (40.0%)
+ <span class="a">2</span>  Fingerprint           <span class="b">sig_ba4a7a717fd1</span> · NULL_FLOOD
+ <span class="c">3</span>  Muscle memory         <span class="c">MISS</span> — never seen this shape
+ <span class="a">4</span>  Recall                lineage 1 upstream change, owner @priya
+                          cognee 1 doc · hydradb 0 prior fixes
+ <span class="a">5</span>  Diagnose              <span class="c">null rate 40.0% today vs 0.0% known-good</span>
+ <span class="a">6</span>  Decide + act          <span class="w">quarantine_partition</span>
+                          <span class="v">because prescribed by runbook recall (cognee)</span>
+                          quarantine → rerun_job → notify_owner
+ <span class="a">7</span>  Verify                <span class="a">exit 0 — resolved</span>
+ <span class="a">8</span>  Learn                 path captured · outcome recorded · narrative written
+
+<span class="dim">SERVICE ACTIVITY                                    live timers</span>
+  <span class="v">COGNEE</span>      what did the org already write down?          <span class="c">18.5s</span>
+  <span class="b">HYDRADB</span>     what have we resolved before?                  996ms
+  <span class="c">HOTDATA</span>     what is wrong with the data right now?         723ms
+  <span class="r">JOB</span>         run job_orders_daily as a subprocess            186ms</pre>
+  <div class="note">Every service call is announced before and after with a live
+     counting timer, so a 18&#8209;second reasoning step reads as work in
+     progress rather than a frozen screen.</div>
+  <div class="n">5</div>
+</section>
+
+<!-- 6 ---------------------------------------------------------------->
+<section class="slide">
+  <div class="kicker">The UI · warm path</div>
+  <h2>Incident 3 — the same fault, a different table</h2>
+  <pre style="margin-top:16px">
+<span class="dim">INCIDENT 3 · job_shipments_daily · table shipments</span>              <span class="a">WARM</span>
+
+ <span class="r">1</span>  Pipeline crashed      <span class="r">exit 1</span> — NOT NULL violated on customer_id
+ <span class="a">2</span>  Fingerprint           <span class="b">sig_ba4a7a717fd1</span> · NULL_FLOOD   <span class="dim">← same signature</span>
+ <span class="a">3</span>  Muscle memory         <span class="a">HIT</span> — solved this shape on <span class="w">orders</span>,
+                          replaying with no reasoning
+ <span class="dim">4  Recall                skipped — replaying a known fix</span>
+ <span class="dim">5  Diagnose              skipped — replaying a known fix</span>
+ <span class="dim">6  Decide + act          skipped — replaying a known fix</span>
+ <span class="a">7</span>  Verify                <span class="a">exit 0 — resolved</span>
+
+<span class="dim">SERVICE ACTIVITY</span>
+  <span class="r">JOB</span>         run job_shipments_daily as a subprocess         131ms
+  <span class="r">JOB</span>         re-run to prove the fix held                    118ms
+
+                                        <span class="a">WARM · 131ms · 0 tokens</span></pre>
+  <div class="note"><b class="hi">This is the demo.</b> A path captured on
+     <code>orders</code> applies to <code>shipments</code> because the signature
+     deliberately excludes the table name. Steps 4–6 grey out — the audience sees
+     the expensive work <i>not happening</i>.</div>
+  <div class="n">6</div>
+</section>
+
+<!-- 7 ---------------------------------------------------------------->
+<section class="slide">
+  <div class="kicker">Results</div>
+  <h2>The compounding curve</h2>
+  <table>
+    <thead><tr><th>#</th><th>table</th><th>signature</th><th>failure mode</th>
+      <th>path</th><th class="right">ms</th><th class="right">tokens</th><th>verify</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>orders</td><td>sig_ba4a7a717fd1</td><td>NULL_FLOOD</td>
+        <td class="cold">COLD</td><td class="right">31,165</td><td class="right">1,902</td><td>PASS</td></tr>
+      <tr><td>2</td><td>shipments</td><td>sig_9c3d1a8ea10f</td><td>VOLUME_COLLAPSE</td>
+        <td class="cold">COLD</td><td class="right">33,396</td><td class="right">1,885</td><td>PASS</td></tr>
+      <tr><td>3</td><td>shipments</td><td>sig_ba4a7a717fd1</td><td>NULL_FLOOD</td>
+        <td class="warm">WARM</td><td class="right">131</td><td class="right">0</td><td>PASS</td></tr>
+      <tr><td>4</td><td>inventory</td><td>sig_9c3d1a8ea10f</td><td>VOLUME_COLLAPSE</td>
+        <td class="warm">WARM</td><td class="right">147</td><td class="right">0</td><td>PASS</td></tr>
+      <tr><td>5</td><td>inventory</td><td>sig_ba4a7a717fd1</td><td>NULL_FLOOD</td>
+        <td class="warm">WARM</td><td class="right">102</td><td class="right">0</td><td>PASS</td></tr>
+      <tr><td>6</td><td>orders</td><td>sig_9c3d1a8ea10f</td><td>VOLUME_COLLAPSE</td>
+        <td class="warm">WARM</td><td class="right">137</td><td class="right">0</td><td>PASS</td></tr>
+    </tbody>
+  </table>
+  <div class="bars">
+    <div class="bar">
+      <div class="bl"><span>COLD — reasoned</span><span>avg 32,280ms · 1,894 tokens · 2 runs</span></div>
+      <div class="bt"><i style="width:100%;background:var(--cold)"></i></div>
+    </div>
+    <div class="bar">
+      <div class="bl"><span>WARM — replayed</span><span>avg 129ms · 0 tokens · 4 runs</span></div>
+      <div class="bt"><i style="width:0.4%;background:var(--warm)"></i></div>
+    </div>
+  </div>
+  <div class="note">Same two signatures rotated across three tables. Replay
+     triggers on signature match, not position — pick any table and we will
+     inject a failure live.</div>
+  <div class="n">7</div>
+</section>
+
+<!-- 8 ---------------------------------------------------------------->
+<section class="slide">
+  <div class="kicker">Engineering</div>
+  <h2>What the docs said, and what was actually true</h2>
+  <p style="color:var(--muted);margin-top:6px">Three of four vendors behaved
+     differently from their documentation. Each was found by running against the
+     live API, and each is recorded in <code>docs/03_SDK_NOTES.md</code>.</p>
+  <div class="grid g2" style="margin-top:18px">
+    <div class="card"><h3>HydraDB · no Cypher</h3><p>The spec's centrepiece was a
+      3&#8209;hop graph query. HydraDB v2 has no graph query language at all, so
+      the lineage graph became ours, traversed in Python. HydraDB became the
+      accumulator instead.</p></div>
+    <div class="card"><h3>hotdata · silent 404</h3><p>A load reporting
+      <code>row_count=20000</code> still 404'd on query, because the catalog is
+      always <code>default</code> regardless of the alias you set. Success then
+      failure, with no obvious link.</p></div>
+    <div class="card"><h3>Cognee · list, not string</h3><p><code>datasets</code>
+      as a bare string works locally and returns 422 remotely. Hosted responses
+      also wrap per dataset, so unwrapping was needed or every excerpt was raw
+      JSON.</p></div>
+    <div class="card"><h3>Rote · no docs</h3><p>Priority #1 in the fallback order
+      with no published API. We implemented muscle memory ourselves — 90 lines,
+      no network. The load&#8209;bearing claim cannot depend on an unverified
+      SDK.</p></div>
+  </div>
+  <div class="note">A test caught the one bug that would have killed the demo:
+     the table name is embedded in real job output
+     (<code>job_orders_daily</code>, <code>in orders:</code>), so keeping it out
+     of the hash input was not enough. Without that fix nothing ever replays and
+     there is no curve.</div>
+  <div class="n">8</div>
+</section>
+
+<!-- 9 ---------------------------------------------------------------->
+<section class="slide">
+  <div class="kicker">Honesty</div>
+  <h2>What is real, and what we would say if asked</h2>
+  <ul class="tight">
+    <li><b>All four vendor services run live.</b> Cognee on a hosted tenant,
+      HydraDB accumulating real memories, hotdata computing over uploaded
+      Parquet, RocketRide chaining three steps on staging. The UI header shows
+      REAL or STUB every run — we cannot demo stubs by accident.</li>
+    <li><b>Muscle memory is ours, not a vendor.</b> ~90 lines, JSON on disk. Said
+      plainly because it reads as discipline, not omission.</li>
+    <li><b>Token counts on any stubbed layer are estimates</b>, computed from real
+      serialised context size and labelled as such in the report footer.</li>
+    <li><b>Every layer keeps a working stub behind a config flag.</b> Any vendor
+      can be dropped with one flag and the demo still runs end to end at 7.4×.</li>
+    <li><b>Incident 1 is genuinely cold.</b> Both memory stores are cleared at
+      start, and HydraDB's delete lag is filtered — so the first incident cannot
+      read its own predecessors.</li>
+  </ul>
+  <div class="foot">22 tests · 11/11 smoke checks · pinned dependencies ·
+     <code>.env</code> gitignored · no new dependencies for the UI</div>
+  <div class="n">9</div>
+</section>
+
+<!-- 10 --------------------------------------------------------------->
+<section class="slide center">
+  <div class="kicker">In one line</div>
+  <h1 style="max-width:30ch">The agent does not get smarter.<br>
+    <span style="color:var(--warm)">It stops forgetting.</span></h1>
+  <p class="sub">Same prompt, same tools, same model. The only thing that changes
+     between incident 1 and incident 3 is what the system remembers — and that
+     alone is worth 249× and every token.</p>
+  <div class="kpis">
+    <div class="kpi"><span>cold, reasoned</span><b class="cold">32.3s</b></div>
+    <div class="kpi"><span>warm, replayed</span><b class="warm">0.13s</b></div>
+    <div class="kpi"><span>tokens avoided</span><b>7,576</b></div>
+    <div class="kpi"><span>verified</span><b>6/6</b></div>
+  </div>
+  <div class="n">10</div>
+</section>
+
+</body>
+</html>
