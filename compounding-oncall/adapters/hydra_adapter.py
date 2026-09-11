@@ -29,6 +29,11 @@ class HydraStub:
     async def setup(self) -> None:
         return None
 
+    async def reset(self) -> int:
+        count = len(self._memories)
+        self._memories = []
+        return count
+
     async def recall(self, table: str, sig: str) -> dict:
         fixes = [
             {
@@ -80,6 +85,9 @@ class HydraReal:
         self._database = config.HYDRA_DATABASE
         self._collection = config.HYDRA_COLLECTION
         self._written = 0
+        # Ids removed by reset(). Deletes are eventually consistent, so recall
+        # filters these out rather than trusting the index to be current.
+        self._deleted_ids: set[str] = set()
 
     # -- lifecycle --------------------------------------------------------
 
@@ -120,6 +128,8 @@ class HydraReal:
         chunks = _dig(result, "data", "chunks") or []
         fixes = []
         for chunk in chunks:
+            if _get(chunk, "id") in self._deleted_ids:
+                continue  # deleted, but the index has not caught up yet
             meta = _get(chunk, "additional_metadata") or {}
             if _get(meta, "sig") and _get(meta, "sig") != sig:
                 continue
@@ -132,6 +142,50 @@ class HydraReal:
                 }
             )
         return {"past_fixes": fixes[:3], "node_count": await self.count()}
+
+    async def reset(self) -> int:
+        """Delete every accumulated resolution so a demo starts genuinely cold.
+
+        Without this, HydraDB is persistent across runs and incident 1 already
+        finds prior fixes -- which both overstates the agent and hides Cognee,
+        since a proven fix outranks a documented one in the decision precedence.
+        """
+        deleted = 0
+        try:
+            result = await self._call(
+                self._client.query,
+                database=self._database,
+                collection=self._collection,
+                query="incident resolution",
+                type="memory",
+                query_by="hybrid",
+                mode="fast",
+                max_results=50,
+            )
+            ids = [
+                _get(chunk, "id")
+                for chunk in (_dig(result, "data", "chunks") or [])
+                if _get(chunk, "id")
+            ]
+            if ids:
+                unique = list(dict.fromkeys(ids))
+                await self._call(
+                    self._client.context.delete,
+                    type="memory",
+                    database=self._database,
+                    ids=unique,
+                )
+                deleted = len(unique)
+                # Deletes are eventually consistent: the search index keeps
+                # serving removed rows for a few seconds. Record what we deleted
+                # and filter it out of recall, so incident 1 is genuinely cold
+                # rather than reading its own predecessors.
+                self._deleted_ids.update(unique)
+        except Exception:  # noqa: BLE001 - a failed reset must not block the run
+            pass
+
+        self._written = 0
+        return deleted
 
     async def count(self) -> int:
         """Accumulated memories, read from the live database.

@@ -17,7 +17,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from adapters import cognee_adapter, hotdata_adapter, hydra_adapter, rocketride_adapter  # noqa: E402
-from core import config  # noqa: E402
+from core import config, present  # noqa: E402
 from core.lineage import LineageGraph  # noqa: E402
 from core.loop import Agent  # noqa: E402
 from core.metrics import MetricsRecorder  # noqa: E402
@@ -43,6 +43,10 @@ async def main() -> int:
     parser.add_argument("--keep", action="store_true",
                         help="keep existing muscle memory instead of starting cold")
     parser.add_argument("--quiet", action="store_true")
+    parser.add_argument("--present", action="store_true",
+                        help="narrated panels for a live audience")
+    parser.add_argument("--pause", action="store_true",
+                        help="wait for Enter between incidents (use with --present)")
     args = parser.parse_args()
 
     config.ensure_dirs()
@@ -74,6 +78,12 @@ async def main() -> int:
 
     await outcomes.setup()
 
+    if not args.keep:
+        # Clear accumulated resolutions too, not just muscle memory. Both stores
+        # must start empty or incident 1 is not really the first incident.
+        cleared = await outcomes.reset()
+        print(f"hydradb: cleared {cleared} prior resolution(s) -- starting cold")
+
     await engine.setup([f"{t}_{suffix}" for t in config.TABLES for suffix in ("today", "good")])
     for table in config.TABLES:
         for suffix in ("today", "good"):
@@ -92,9 +102,12 @@ async def main() -> int:
         orchestrator=orchestrator,
         metrics=metrics,
         verbose=not args.quiet,
+        present=args.present,
     )
 
     for run_no, item in enumerate(queue, start=1):
+        if args.pause and run_no > 1:
+            input("\n   [Enter] next incident ")
         stage(item["table"], item["corruption"])
         # hotdata holds its own copy, so refresh the staged partition there too.
         await engine.load(
@@ -114,7 +127,10 @@ async def main() -> int:
 
     print()
     metrics.print_table()
-    metrics.print_summary()
+    if args.present:
+        present.curve(metrics.summary())
+    else:
+        metrics.print_summary()
     metrics.save(config.METRICS_FILE)
     print(f"\nmetrics written to {config.METRICS_FILE.relative_to(config.REPO_ROOT)}")
 

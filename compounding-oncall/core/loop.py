@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from adapters.contracts import Decision, Diagnostics, GraphContext, Incident
-from core import supervisor
+from core import present, supervisor
 from core.lineage import LineageGraph
 from core.metrics import MetricsRecorder, RunRecord
 from core.muscle import MuscleMemoryStore
@@ -37,9 +37,10 @@ class Agent:
     orchestrator: object # Orchestrator   (RocketRide)
     metrics: MetricsRecorder
     verbose: bool = True
+    present: bool = False  # narrated panels for a live audience
 
     def _say(self, message: str) -> None:
-        if self.verbose:
+        if self.verbose and not self.present:
             print(message)
 
     # -- steps ------------------------------------------------------------
@@ -100,14 +101,21 @@ class Agent:
             self._say(f"[{run_no}] {table}: job succeeded, nothing to do")
             return None
 
+        if self.present:
+            present.incident_header(run_no, table, incident["job_id"])
+
         first_line = incident["error_text"].splitlines()[0]
         self._say(f"[{run_no}] {table}: exit {incident['exit_code']}")
         self._say(f"      {first_line[:120]}")
+        if self.present:
+            present.crash(incident["exit_code"], first_line)
 
         # 2 signature
         sig = signature(incident["error_text"], table)
         kind = sig_type(incident["error_text"])
         self._say(f"[{run_no}] {table}: signature {sig} ({kind})")
+        if self.present:
+            present.fingerprint(sig, kind)
 
         # 3 muscle memory
         remembered = self.muscle.lookup(sig)
@@ -118,6 +126,8 @@ class Agent:
                 f"[{run_no}] {table}: HIT -- replaying path captured from "
                 f"{remembered['captured_from_table']}, no reasoning"
             )
+            if self.present:
+                present.memory_hit(remembered["captured_from_table"])
             decision = self.muscle.replay(sig, table)
             diagnostics: Diagnostics = {
                 "metrics": {},
@@ -127,6 +137,8 @@ class Agent:
         else:
             path = "COLD"
             self._say(f"[{run_no}] {table}: MISS -- reasoning from scratch")
+            if self.present:
+                present.memory_miss()
 
             # 4 recall
             ctx = await self.recall(incident, sig)
@@ -136,26 +148,48 @@ class Agent:
                 f"corpus: {len(ctx['corpus_recall'])} doc(s), "
                 f"prior fixes: {len(ctx['past_fixes'])}"
             )
+            if self.present:
+                present.recall(
+                    hops,
+                    len(ctx["corpus_recall"]),
+                    len(ctx["past_fixes"]),
+                    ctx.get("owner") or "unassigned",
+                )
 
             # 5 diagnose
             diagnostics = await self.diagnose(incident, kind)
             self._say(f"      diagnostics: {diagnostics['detail']}")
+            if self.present:
+                present.diagnose(diagnostics["detail"], diagnostics["failed_check"])
 
             # 6 decide + act
             decision = await self.orchestrator.decide_and_act(incident, ctx, diagnostics)
             rationale = decision["params"].get("rationale", "")
             self._say(f"      action: {decision['action']} ({rationale})")
             self._say(f"      chain:  {' -> '.join(decision['chain'])}")
+            if self.present:
+                present.act(decision["action"], rationale, decision["chain"])
 
         # 7 verify -- the real job, again
         passed, exit_code, detail = await supervisor.verify(table)
         self._say(f"[{run_no}] {table}: verify exit {exit_code} ({'PASS' if passed else 'FAIL'})")
+        if self.present:
+            present.verify(passed, exit_code)
 
         elapsed_ms = int((time.perf_counter() - started) * 1000)
 
         # 8 learn (only on a verified cold resolution)
         if passed and path == "COLD":
             await self.learn(incident, sig, decision, elapsed_ms)
+            if self.present:
+                present.learn([
+                    "muscle memory  captured the path (next match replays free)",
+                    "hydradb        recorded the outcome",
+                    "cognee         got the resolution narrative",
+                ])
+
+        if self.present:
+            present.outcome(path, elapsed_ms, decision["tokens_used"])
 
         return self.metrics.record(
             run_no=run_no,
