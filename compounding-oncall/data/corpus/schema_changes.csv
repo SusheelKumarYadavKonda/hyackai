@@ -1,0 +1,5 @@
+change_id,ts,table,column,description,author
+sc_001,2026-09-09T20:25:04+00:00,raw_customers_cdc,customer_id,"renamed cust_id -> customer_id_v2 in CDC connector",devon
+sc_002,2026-09-08T20:25:04+00:00,raw_shipments_cdc,customer_id,"carrier feed column remapped during connector upgrade",ana
+sc_003,2026-09-10T20:25:04+00:00,raw_inventory_snapshots,customer_id,"snapshot export dropped cust_id alias",devon
+sc_004,2026-08-30T20:25:04+00:00,raw_orders_cdc,order_total,"widened decimal precision (outside incident window)",priya

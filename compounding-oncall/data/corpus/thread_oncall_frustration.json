@@ -1,0 +1,27 @@
+[
+  {
+    "user": "saral",
+    "ts": "23:52",
+    "message": "inventory_daily null constraint. third time."
+  },
+  {
+    "user": "devon",
+    "ts": "23:55",
+    "message": "what was the fix last time"
+  },
+  {
+    "user": "saral",
+    "ts": "23:58",
+    "message": "that is the whole problem, I know we fixed it, I cannot find how"
+  },
+  {
+    "user": "devon",
+    "ts": "00:03",
+    "message": "found a postmortem. quarantine + rerun + page upstream owner."
+  },
+  {
+    "user": "saral",
+    "ts": "00:04",
+    "message": "45 minutes to rediscover something we already knew. cool."
+  }
+]

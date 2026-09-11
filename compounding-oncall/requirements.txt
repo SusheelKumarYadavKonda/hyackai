@@ -1,0 +1,12 @@
+# Pinned exactly. Unpinned ranges are Snyk scan surface and reproducibility risk.
+
+# Core -- required for the stub path (which is the default).
+duckdb==1.1.3
+pytest==8.3.4
+
+# Vendor SDKs -- only needed when the matching USE_STUB_* flag is off.
+# Uncomment as each integration goes live, and re-run the Snyk scan afterwards.
+# cognee==0.1.44
+# hydradb-sdk==2.0.6
+# hotdata==0.3.1
+# rocketride==0.9.2

@@ -1,0 +1,32 @@
+[
+  {
+    "table": "orders",
+    "corruption": "null_flood",
+    "expect": "COLD"
+  },
+  {
+    "table": "shipments",
+    "corruption": "collapsed",
+    "expect": "COLD"
+  },
+  {
+    "table": "shipments",
+    "corruption": "null_flood",
+    "expect": "WARM"
+  },
+  {
+    "table": "inventory",
+    "corruption": "collapsed",
+    "expect": "WARM"
+  },
+  {
+    "table": "inventory",
+    "corruption": "null_flood",
+    "expect": "WARM"
+  },
+  {
+    "table": "orders",
+    "corruption": "collapsed",
+    "expect": "WARM"
+  }
+]
