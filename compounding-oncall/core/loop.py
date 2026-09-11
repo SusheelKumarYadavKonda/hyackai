@@ -14,11 +14,12 @@ worth trusting.
 """
 
 import time
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Optional
 
 from adapters.contracts import Decision, Diagnostics, GraphContext, Incident
 from core import present, supervisor
+from core.events import BUS
 from core.lineage import LineageGraph
 from core.metrics import MetricsRecorder, RunRecord
 from core.muscle import MuscleMemoryStore
@@ -96,6 +97,7 @@ class Agent:
 
         # 1 trigger
         self._say(f"\n[{run_no}] {table}: running job_{table}_daily ...")
+        BUS.emit("job_start", table=table, run_no=run_no)
         incident = await supervisor.watch(table)
         if incident is None:
             self._say(f"[{run_no}] {table}: job succeeded, nothing to do")
@@ -105,6 +107,14 @@ class Agent:
             present.incident_header(run_no, table, incident["job_id"])
 
         first_line = incident["error_text"].splitlines()[0]
+        BUS.emit(
+            "incident",
+            run_no=run_no,
+            table=table,
+            job_id=incident["job_id"],
+            exit_code=incident["exit_code"],
+            error_line=first_line,
+        )
         self._say(f"[{run_no}] {table}: exit {incident['exit_code']}")
         self._say(f"      {first_line[:120]}")
         if self.present:
@@ -116,6 +126,7 @@ class Agent:
         self._say(f"[{run_no}] {table}: signature {sig} ({kind})")
         if self.present:
             present.fingerprint(sig, kind)
+        BUS.emit("fingerprint", signature=sig, sig_type=kind)
 
         # 3 muscle memory
         remembered = self.muscle.lookup(sig)
@@ -128,6 +139,7 @@ class Agent:
             )
             if self.present:
                 present.memory_hit(remembered["captured_from_table"])
+            BUS.emit("memory", hit=True, from_table=remembered["captured_from_table"])
             decision = self.muscle.replay(sig, table)
             diagnostics: Diagnostics = {
                 "metrics": {},
@@ -139,6 +151,7 @@ class Agent:
             self._say(f"[{run_no}] {table}: MISS -- reasoning from scratch")
             if self.present:
                 present.memory_miss()
+            BUS.emit("memory", hit=False)
 
             # 4 recall
             ctx = await self.recall(incident, sig)
@@ -155,12 +168,24 @@ class Agent:
                     len(ctx["past_fixes"]),
                     ctx.get("owner") or "unassigned",
                 )
+            BUS.emit(
+                "recall",
+                hops=hops,
+                corpus=len(ctx["corpus_recall"]),
+                fixes=len(ctx["past_fixes"]),
+                owner=ctx.get("owner") or "unassigned",
+            )
 
             # 5 diagnose
             diagnostics = await self.diagnose(incident, kind)
             self._say(f"      diagnostics: {diagnostics['detail']}")
             if self.present:
                 present.diagnose(diagnostics["detail"], diagnostics["failed_check"])
+            BUS.emit(
+                "diagnose",
+                detail=diagnostics["detail"],
+                failed_check=diagnostics["failed_check"],
+            )
 
             # 6 decide + act
             decision = await self.orchestrator.decide_and_act(incident, ctx, diagnostics)
@@ -169,29 +194,38 @@ class Agent:
             self._say(f"      chain:  {' -> '.join(decision['chain'])}")
             if self.present:
                 present.act(decision["action"], rationale, decision["chain"])
+            BUS.emit(
+                "act",
+                action=decision["action"],
+                rationale=rationale,
+                chain=decision["chain"],
+            )
 
         # 7 verify -- the real job, again
         passed, exit_code, detail = await supervisor.verify(table)
         self._say(f"[{run_no}] {table}: verify exit {exit_code} ({'PASS' if passed else 'FAIL'})")
         if self.present:
             present.verify(passed, exit_code)
+        BUS.emit("verify", passed=passed, exit_code=exit_code, table=table)
 
         elapsed_ms = int((time.perf_counter() - started) * 1000)
 
         # 8 learn (only on a verified cold resolution)
         if passed and path == "COLD":
             await self.learn(incident, sig, decision, elapsed_ms)
+            learned = [
+                "muscle memory captured the path — the next match replays free",
+                "hydradb recorded the outcome",
+                "cognee got the resolution narrative",
+            ]
             if self.present:
-                present.learn([
-                    "muscle memory  captured the path (next match replays free)",
-                    "hydradb        recorded the outcome",
-                    "cognee         got the resolution narrative",
-                ])
+                present.learn(learned)
+            BUS.emit("learn", items=learned)
 
         if self.present:
             present.outcome(path, elapsed_ms, decision["tokens_used"])
 
-        return self.metrics.record(
+        record = self.metrics.record(
             run_no=run_no,
             signature=sig,
             table=table,
@@ -207,3 +241,5 @@ class Agent:
             failed_check=diagnostics["failed_check"],
             verify_detail=detail,
         )
+        BUS.emit("run", **asdict(record))
+        return record
