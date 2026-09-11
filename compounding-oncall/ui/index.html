@@ -81,6 +81,15 @@
       </div>
     </div>
 
+    <!-- what the agent is doing right now, per service call -->
+    <div class="activity" id="activity-box">
+      <div class="act-head">
+        <h2>Service activity</h2>
+        <span class="dim-note">every call the agent makes, live</span>
+      </div>
+      <ul class="calls" id="calls"></ul>
+    </div>
+
     <div id="empty" class="empty">
       <p>Press <b>Run incidents</b> to start the pipeline jobs.</p>
       <p class="dim">Each job runs as a real subprocess. When one exits non&#8209;zero,

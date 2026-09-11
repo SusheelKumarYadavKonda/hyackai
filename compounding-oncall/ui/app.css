@@ -225,3 +225,61 @@ main {
 .runs tr { animation: rise .25s ease-out; }
 
 .footnote { margin-top: 12px; font-size: 11px; color: var(--dim); line-height: 1.5; }
+
+/* ---------- service activity: what the agent is doing right now ---------- */
+
+.activity {
+  margin-top: 16px; padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.act-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.act-head h2 { margin: 0; }
+.dim-note { font-size: 11px; color: var(--dim); margin-left: auto; }
+
+.calls { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+
+.call {
+  display: grid;
+  grid-template-columns: 84px 1fr auto;
+  gap: 10px; align-items: center;
+  padding: 8px 10px; border-radius: 6px;
+  background: var(--panel-2);
+  border-left: 2px solid var(--line);
+  font-size: 12px;
+  animation: slidein .22s ease-out;
+}
+@keyframes slidein { from { opacity: 0; transform: translateX(-6px); } }
+
+.call .who {
+  font: 650 10px/1 var(--mono); text-transform: uppercase; letter-spacing: .06em;
+  color: var(--muted);
+}
+.call .what { color: var(--muted); }
+.call .ms { font: 650 11.5px/1 var(--mono); color: var(--dim); }
+
+/* in flight: pulsing left border and a live-counting timer */
+.call.inflight { border-left-color: var(--blue); }
+.call.inflight .who { color: var(--blue); }
+.call.inflight .ms { color: var(--blue); }
+.call.inflight::after {
+  content: ""; position: absolute;
+}
+.call.inflight .what::after {
+  content: " …"; color: var(--blue);
+}
+
+.call.done { border-left-color: var(--warm); opacity: .72; }
+.call.done .ms { color: var(--warm); }
+.call.failed { border-left-color: var(--red); }
+.call.failed .ms { color: var(--red); }
+
+/* colour-code by layer so the audience learns which service is which */
+.call[data-layer="cognee"]     .who { color: var(--violet); }
+.call[data-layer="hydradb"]    .who { color: var(--blue); }
+.call[data-layer="hotdata"]    .who { color: var(--cold); }
+.call[data-layer="rocketride"] .who { color: var(--warm); }
+.call[data-layer="lineage"]    .who { color: var(--muted); }
+.call[data-layer="job"]        .who { color: var(--red); }
+
+.call.inflight[data-layer] .who { animation: dimflash 1.1s infinite; }
+@keyframes dimflash { 50% { opacity: .45; } }

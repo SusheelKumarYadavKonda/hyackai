@@ -12,6 +12,7 @@ const el = (tag, cls, text) => {
 
 const TABLES = ["orders", "shipments", "inventory"];
 const state = { runs: [], maxPaths: 1, maxMem: 1 };
+const inflight = new Map(); // layer -> { li, tick } for calls still running
 
 /* ---------- pipeline tiles ---------- */
 
@@ -219,6 +220,39 @@ const handlers = {
     step(8, "done", d.items.map((i) => `<span class="ok">${escapeHtml(i)}</span>`).join("<br>"));
   },
 
+  call_start(d) {
+    const li = el("li", "call inflight");
+    li.dataset.layer = d.layer;
+    li.id = `call-${d.layer}-${Date.now()}`;
+    li.append(el("span", "who", d.layer), el("span", "what", d.question), el("span", "ms", "0.0s"));
+    $("calls").prepend(li);
+
+    // Live timer, so a 20s call visibly counts rather than sitting frozen.
+    const t0 = performance.now();
+    const tick = setInterval(() => {
+      li.querySelector(".ms").textContent = `${((performance.now() - t0) / 1000).toFixed(1)}s`;
+    }, 100);
+    inflight.set(d.layer, { li, tick });
+
+    // Keep the list short enough to read from the back of a room.
+    const all = $("calls").children;
+    while (all.length > 9) all[all.length - 1].remove();
+  },
+
+  call_end(d) {
+    const entry = inflight.get(d.layer);
+    if (!entry) return;
+    clearInterval(entry.tick);
+    entry.li.classList.remove("inflight");
+    entry.li.classList.add(d.error ? "failed" : "done");
+    entry.li.querySelector(".ms").textContent = d.error
+      ? d.error
+      : d.ms >= 1000
+      ? `${(d.ms / 1000).toFixed(1)}s`
+      : `${d.ms}ms`;
+    inflight.delete(d.layer);
+  },
+
   run(d) {
     if (d.path === "WARM") step(8, "skip", "already captured — nothing new to learn");
     $("inc-ms").textContent = `${d.elapsed_ms.toLocaleString()} ms`;
@@ -262,6 +296,9 @@ $("run").addEventListener("click", async () => {
   $("run").textContent = "Running…";
   $("live-dot").classList.add("live");
   $("runs").innerHTML = "";
+  $("calls").innerHTML = "";
+  inflight.forEach(({ tick }) => clearInterval(tick));
+  inflight.clear();
   state.runs = [];
   renderCurve();
   await fetch("/start", { method: "POST" });
