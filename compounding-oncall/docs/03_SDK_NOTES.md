@@ -132,6 +132,13 @@ with hotdata.ApiClient(configuration) as api_client:
 - `create_database` takes `expires_at="24h"` and nested `DatabaseDefaultSchemaDecl(name="public", tables=[DatabaseDefaultTableDecl(name=...)])`.
 - `DatabasesApi.load_database_table(database_id, ...)` skips fetching `default_connection_id` first.
 - Errors: `from hotdata.rest import ApiException`.
+
+**Verified against the live API (not just docs):**
+- **Do not prefix the `--catalog`/`name` alias in SQL.** The catalog is always `default`, so `oncall.public.orders_today` raises `BAD_REQUEST: table not found`. All of these work: bare `orders_today`, `public.orders_today`, `default.public.orders_today`. Since `x_database_id` already scopes the query, use the bare name.
+- `load_managed_table` returns `row_count`, `table_name`, `schema_name`, `connection_id`, and `arrow_schema_json`. A successful load reporting 20000 rows still 404s on query if the SQL names the wrong catalog — check the qualification before suspecting the load.
+- `InformationSchemaApi` exposes `information_schema()`, **not** `list_tables()`, and it does not accept `x_database_id`.
+- `create_database` 409s on a duplicate name, so `setup()` lists databases and reuses a match rather than creating one per run.
+- API token needs **Read + Write** access: `create_database`, `upload_file`, and `load_managed_table` are all writes.
 - **Uploads cost wall-clock.** Keep row counts modest; all our diagnostics are relative, so 20–50k rows proves the same thing as 200k.
 
 CLI equivalent (for `smoke.py`):

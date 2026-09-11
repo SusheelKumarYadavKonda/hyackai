@@ -85,10 +85,22 @@ class HotdataReal:
         self._catalog = "oncall"
 
     async def setup(self, tables: list[str]) -> None:
+        """Create the instant database and declare every table we will load.
+
+        Reuses an existing database of the same name rather than creating a new
+        one per run, so repeated demos do not accumulate orphaned databases.
+        """
+
         def _create():
             hotdata = self._hotdata
             with hotdata.ApiClient(self._configuration) as client:
                 api = hotdata.DatabasesApi(client)
+
+                for existing in getattr(api.list_databases(), "databases", []):
+                    if getattr(existing, "name", None) == self._catalog:
+                        detail = api.get_database(existing.id)
+                        return existing.id, detail.default_connection_id
+
                 created = api.create_database(
                     hotdata.CreateDatabaseRequest(
                         name=self._catalog,
@@ -128,18 +140,26 @@ class HotdataReal:
         await asyncio.to_thread(_load)
 
     async def _sql(self, sql: str) -> list[tuple]:
-        # Managed tables address as <catalog>.<schema>.<table>.
-        qualified = sql.replace("FROM ", f"FROM {self._catalog}.public.")
+        """Run SQL against the instant database.
+
+        No catalog rewriting: x_database_id already scopes the query, and managed
+        tables resolve on the bare name. Verified against the live API -- the
+        catalog is 'default' regardless of the --catalog alias used at creation,
+        so prefixing the alias raises "table not found".
+        """
 
         def _query():
             hotdata = self._hotdata
             with hotdata.ApiClient(self._configuration) as client:
                 response = hotdata.QueryApi(client).query(
-                    hotdata.QueryRequest(sql=qualified),
+                    hotdata.QueryRequest(sql=sql),
                     x_database_id=self._database_id,
                 )
                 rows = getattr(response, "rows", None) or []
-                return [tuple(r.values()) if isinstance(r, dict) else tuple(r) for r in rows]
+                return [
+                    tuple(r.values()) if isinstance(r, dict) else tuple(r)
+                    for r in rows
+                ]
 
         return await asyncio.to_thread(_query)
 
