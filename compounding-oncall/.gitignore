@@ -3,3 +3,8 @@ __pycache__/
 *.pyc
 data/warehouse/*.parquet
 .cognee/
+.state/
+report.html
+.pytest_cache/
+.venv/
+venv/

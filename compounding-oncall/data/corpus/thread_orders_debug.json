@@ -1,0 +1,37 @@
+[
+  {
+    "user": "priya",
+    "ts": "09:14",
+    "message": "orders_daily red again. NOT NULL on customer_id."
+  },
+  {
+    "user": "devon",
+    "ts": "09:15",
+    "message": "mart problem or upstream?"
+  },
+  {
+    "user": "priya",
+    "ts": "09:17",
+    "message": "upstream. cust_id got renamed in the customers CDC feed, staging view never caught up. nulls all the way down."
+  },
+  {
+    "user": "devon",
+    "ts": "09:18",
+    "message": "same as last month then"
+  },
+  {
+    "user": "priya",
+    "ts": "09:19",
+    "message": "same as last month. quarantining the partition and rerunning off known-good."
+  },
+  {
+    "user": "devon",
+    "ts": "09:21",
+    "message": "we have a postmortem for this exact thing somewhere"
+  },
+  {
+    "user": "priya",
+    "ts": "09:22",
+    "message": "we have three."
+  }
+]

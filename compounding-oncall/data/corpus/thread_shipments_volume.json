@@ -1,0 +1,27 @@
+[
+  {
+    "user": "tomo",
+    "ts": "02:41",
+    "message": "shipments partition is tiny. like 2% of normal."
+  },
+  {
+    "user": "ana",
+    "ts": "02:44",
+    "message": "carrier API rate limited us overnight, extract wrote a partial file"
+  },
+  {
+    "user": "tomo",
+    "ts": "02:45",
+    "message": "so not an empty day, a truncated one. row count check caught it at least."
+  },
+  {
+    "user": "ana",
+    "ts": "02:47",
+    "message": "quarantine and rerun off yesterday?"
+  },
+  {
+    "user": "tomo",
+    "ts": "02:48",
+    "message": "yep. re-extracting once the limit resets."
+  }
+]

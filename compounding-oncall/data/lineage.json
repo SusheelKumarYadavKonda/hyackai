@@ -1,0 +1,420 @@
+{
+  "nodes": [
+    {
+      "id": "orders",
+      "label": "Table",
+      "name": "orders",
+      "layer": "mart"
+    },
+    {
+      "id": "job_orders_daily",
+      "label": "Job",
+      "name": "job_orders_daily",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "id": "owner_orders",
+      "label": "Owner",
+      "name": "Priya Raman",
+      "slack_handle": "@priya",
+      "team": "commerce-data"
+    },
+    {
+      "id": "staging_orders",
+      "label": "Table",
+      "name": "staging_orders",
+      "layer": "staging"
+    },
+    {
+      "id": "job_staging_orders",
+      "label": "Job",
+      "name": "job_staging_orders",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "id": "raw_orders_cdc",
+      "label": "Table",
+      "name": "raw_orders_cdc",
+      "layer": "raw"
+    },
+    {
+      "id": "raw_orders_cdc.customer_id",
+      "label": "Column",
+      "name": "customer_id",
+      "dtype": "BIGINT",
+      "nullable": false
+    },
+    {
+      "id": "owner_raw_orders_cdc",
+      "label": "Owner",
+      "name": "Devon Ilesanmi",
+      "slack_handle": "@devon",
+      "team": "platform-ingest"
+    },
+    {
+      "id": "raw_customers_cdc",
+      "label": "Table",
+      "name": "raw_customers_cdc",
+      "layer": "raw"
+    },
+    {
+      "id": "raw_customers_cdc.customer_id",
+      "label": "Column",
+      "name": "customer_id",
+      "dtype": "BIGINT",
+      "nullable": false
+    },
+    {
+      "id": "sc_001",
+      "label": "SchemaChange",
+      "ts": "2026-09-09T20:25:04+00:00",
+      "description": "renamed cust_id -> customer_id_v2 in CDC connector",
+      "author": "devon"
+    },
+    {
+      "id": "owner_raw_customers_cdc",
+      "label": "Owner",
+      "name": "Devon Ilesanmi",
+      "slack_handle": "@devon",
+      "team": "platform-ingest"
+    },
+    {
+      "id": "shipments",
+      "label": "Table",
+      "name": "shipments",
+      "layer": "mart"
+    },
+    {
+      "id": "job_shipments_daily",
+      "label": "Job",
+      "name": "job_shipments_daily",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "id": "owner_shipments",
+      "label": "Owner",
+      "name": "Tom Okafor",
+      "slack_handle": "@tomo",
+      "team": "logistics-data"
+    },
+    {
+      "id": "staging_shipments",
+      "label": "Table",
+      "name": "staging_shipments",
+      "layer": "staging"
+    },
+    {
+      "id": "job_staging_shipments",
+      "label": "Job",
+      "name": "job_staging_shipments",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "id": "raw_shipments_cdc",
+      "label": "Table",
+      "name": "raw_shipments_cdc",
+      "layer": "raw"
+    },
+    {
+      "id": "raw_shipments_cdc.customer_id",
+      "label": "Column",
+      "name": "customer_id",
+      "dtype": "BIGINT",
+      "nullable": false
+    },
+    {
+      "id": "sc_002",
+      "label": "SchemaChange",
+      "ts": "2026-09-08T20:25:04+00:00",
+      "description": "carrier feed column remapped during connector upgrade",
+      "author": "ana"
+    },
+    {
+      "id": "owner_raw_shipments_cdc",
+      "label": "Owner",
+      "name": "Devon Ilesanmi",
+      "slack_handle": "@devon",
+      "team": "platform-ingest"
+    },
+    {
+      "id": "raw_carriers",
+      "label": "Table",
+      "name": "raw_carriers",
+      "layer": "raw"
+    },
+    {
+      "id": "raw_carriers.customer_id",
+      "label": "Column",
+      "name": "customer_id",
+      "dtype": "BIGINT",
+      "nullable": false
+    },
+    {
+      "id": "owner_raw_carriers",
+      "label": "Owner",
+      "name": "Devon Ilesanmi",
+      "slack_handle": "@devon",
+      "team": "platform-ingest"
+    },
+    {
+      "id": "inventory",
+      "label": "Table",
+      "name": "inventory",
+      "layer": "mart"
+    },
+    {
+      "id": "job_inventory_daily",
+      "label": "Job",
+      "name": "job_inventory_daily",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "id": "owner_inventory",
+      "label": "Owner",
+      "name": "Sara Lindqvist",
+      "slack_handle": "@saral",
+      "team": "supply-data"
+    },
+    {
+      "id": "staging_inventory",
+      "label": "Table",
+      "name": "staging_inventory",
+      "layer": "staging"
+    },
+    {
+      "id": "job_staging_inventory",
+      "label": "Job",
+      "name": "job_staging_inventory",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "id": "raw_inventory_snapshots",
+      "label": "Table",
+      "name": "raw_inventory_snapshots",
+      "layer": "raw"
+    },
+    {
+      "id": "raw_inventory_snapshots.customer_id",
+      "label": "Column",
+      "name": "customer_id",
+      "dtype": "BIGINT",
+      "nullable": false
+    },
+    {
+      "id": "sc_003",
+      "label": "SchemaChange",
+      "ts": "2026-09-10T20:25:04+00:00",
+      "description": "snapshot export dropped cust_id alias",
+      "author": "devon"
+    },
+    {
+      "id": "owner_raw_inventory_snapshots",
+      "label": "Owner",
+      "name": "Devon Ilesanmi",
+      "slack_handle": "@devon",
+      "team": "platform-ingest"
+    },
+    {
+      "id": "raw_warehouses",
+      "label": "Table",
+      "name": "raw_warehouses",
+      "layer": "raw"
+    },
+    {
+      "id": "raw_warehouses.customer_id",
+      "label": "Column",
+      "name": "customer_id",
+      "dtype": "BIGINT",
+      "nullable": false
+    },
+    {
+      "id": "owner_raw_warehouses",
+      "label": "Owner",
+      "name": "Devon Ilesanmi",
+      "slack_handle": "@devon",
+      "team": "platform-ingest"
+    }
+  ],
+  "edges": [
+    {
+      "from": "job_orders_daily",
+      "to": "orders",
+      "rel": "WRITES"
+    },
+    {
+      "from": "owner_orders",
+      "to": "orders",
+      "rel": "OWNS"
+    },
+    {
+      "from": "owner_orders",
+      "to": "job_orders_daily",
+      "rel": "OWNS"
+    },
+    {
+      "from": "job_orders_daily",
+      "to": "staging_orders",
+      "rel": "READS"
+    },
+    {
+      "from": "job_staging_orders",
+      "to": "staging_orders",
+      "rel": "WRITES"
+    },
+    {
+      "from": "job_staging_orders",
+      "to": "raw_orders_cdc",
+      "rel": "READS"
+    },
+    {
+      "from": "raw_orders_cdc",
+      "to": "raw_orders_cdc.customer_id",
+      "rel": "HAS_COLUMN"
+    },
+    {
+      "from": "owner_raw_orders_cdc",
+      "to": "raw_orders_cdc",
+      "rel": "OWNS"
+    },
+    {
+      "from": "job_staging_orders",
+      "to": "raw_customers_cdc",
+      "rel": "READS"
+    },
+    {
+      "from": "raw_customers_cdc",
+      "to": "raw_customers_cdc.customer_id",
+      "rel": "HAS_COLUMN"
+    },
+    {
+      "from": "sc_001",
+      "to": "raw_customers_cdc.customer_id",
+      "rel": "ALTERED"
+    },
+    {
+      "from": "owner_raw_customers_cdc",
+      "to": "raw_customers_cdc",
+      "rel": "OWNS"
+    },
+    {
+      "from": "job_shipments_daily",
+      "to": "shipments",
+      "rel": "WRITES"
+    },
+    {
+      "from": "owner_shipments",
+      "to": "shipments",
+      "rel": "OWNS"
+    },
+    {
+      "from": "owner_shipments",
+      "to": "job_shipments_daily",
+      "rel": "OWNS"
+    },
+    {
+      "from": "job_shipments_daily",
+      "to": "staging_shipments",
+      "rel": "READS"
+    },
+    {
+      "from": "job_staging_shipments",
+      "to": "staging_shipments",
+      "rel": "WRITES"
+    },
+    {
+      "from": "job_staging_shipments",
+      "to": "raw_shipments_cdc",
+      "rel": "READS"
+    },
+    {
+      "from": "raw_shipments_cdc",
+      "to": "raw_shipments_cdc.customer_id",
+      "rel": "HAS_COLUMN"
+    },
+    {
+      "from": "sc_002",
+      "to": "raw_shipments_cdc.customer_id",
+      "rel": "ALTERED"
+    },
+    {
+      "from": "owner_raw_shipments_cdc",
+      "to": "raw_shipments_cdc",
+      "rel": "OWNS"
+    },
+    {
+      "from": "job_staging_shipments",
+      "to": "raw_carriers",
+      "rel": "READS"
+    },
+    {
+      "from": "raw_carriers",
+      "to": "raw_carriers.customer_id",
+      "rel": "HAS_COLUMN"
+    },
+    {
+      "from": "owner_raw_carriers",
+      "to": "raw_carriers",
+      "rel": "OWNS"
+    },
+    {
+      "from": "job_inventory_daily",
+      "to": "inventory",
+      "rel": "WRITES"
+    },
+    {
+      "from": "owner_inventory",
+      "to": "inventory",
+      "rel": "OWNS"
+    },
+    {
+      "from": "owner_inventory",
+      "to": "job_inventory_daily",
+      "rel": "OWNS"
+    },
+    {
+      "from": "job_inventory_daily",
+      "to": "staging_inventory",
+      "rel": "READS"
+    },
+    {
+      "from": "job_staging_inventory",
+      "to": "staging_inventory",
+      "rel": "WRITES"
+    },
+    {
+      "from": "job_staging_inventory",
+      "to": "raw_inventory_snapshots",
+      "rel": "READS"
+    },
+    {
+      "from": "raw_inventory_snapshots",
+      "to": "raw_inventory_snapshots.customer_id",
+      "rel": "HAS_COLUMN"
+    },
+    {
+      "from": "sc_003",
+      "to": "raw_inventory_snapshots.customer_id",
+      "rel": "ALTERED"
+    },
+    {
+      "from": "owner_raw_inventory_snapshots",
+      "to": "raw_inventory_snapshots",
+      "rel": "OWNS"
+    },
+    {
+      "from": "job_staging_inventory",
+      "to": "raw_warehouses",
+      "rel": "READS"
+    },
+    {
+      "from": "raw_warehouses",
+      "to": "raw_warehouses.customer_id",
+      "rel": "HAS_COLUMN"
+    },
+    {
+      "from": "owner_raw_warehouses",
+      "to": "raw_warehouses",
+      "rel": "OWNS"
+    }
+  ]
+}

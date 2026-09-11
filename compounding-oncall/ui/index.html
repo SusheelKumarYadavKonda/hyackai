@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Compounding On-Call — live</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <span class="dot" id="live-dot"></span>
+    <h1>Compounding On&#8209;Call</h1>
+    <span class="tag">data pipeline incident response</span>
+  </div>
+  <div class="layers" id="layers"></div>
+  <button id="run" class="run">Run incidents</button>
+</header>
+
+<main>
+  <!-- LEFT: the pipeline being watched -->
+  <section class="panel pipelines">
+    <h2>Pipeline health</h2>
+    <div id="jobs" class="jobs"></div>
+
+    <h2 class="spaced">Assertions</h2>
+    <ul id="checks" class="checks">
+      <li data-check="not_null"><span class="pill idle">idle</span> customer_id NOT NULL</li>
+      <li data-check="volume"><span class="pill idle">idle</span> row count vs 7&#8209;day median</li>
+      <li data-check="freshness"><span class="pill idle">idle</span> partition freshness</li>
+    </ul>
+
+    <h2 class="spaced">Memory</h2>
+    <div class="mem">
+      <div class="mem-row">
+        <span>muscle paths</span><b id="m-paths">0</b>
+        <div class="spark" id="sp-paths"></div>
+      </div>
+      <div class="mem-row">
+        <span>hydradb outcomes</span><b id="m-mem">0</b>
+        <div class="spark" id="sp-mem"></div>
+      </div>
+      <div class="mem-row">
+        <span>cognee corpus</span><b id="m-corpus">0</b>
+      </div>
+    </div>
+  </section>
+
+  <!-- CENTRE: the agent working, step by step -->
+  <section class="panel stage">
+    <div class="stage-head">
+      <h2>Agent</h2>
+      <span id="stage-status" class="status">waiting for a crash</span>
+    </div>
+
+    <div id="incident-card" class="incident hidden">
+      <div class="inc-head">
+        <span class="inc-no" id="inc-no">1</span>
+        <div>
+          <div class="inc-job" id="inc-job">job_orders_daily</div>
+          <div class="inc-sig" id="inc-sig">—</div>
+        </div>
+        <span class="path-badge" id="inc-path">…</span>
+      </div>
+
+      <ol class="steps" id="steps">
+        <li data-step="1"><i></i><div><b>Pipeline crashed</b><p id="s1">—</p></div></li>
+        <li data-step="2"><i></i><div><b>Fingerprint failure</b><p id="s2">—</p></div></li>
+        <li data-step="3"><i></i><div><b>Check muscle memory</b><p id="s3">—</p></div></li>
+        <li data-step="4"><i></i><div><b>Recall what we know</b><p id="s4">—</p></div></li>
+        <li data-step="5"><i></i><div><b>Diagnose live data</b><p id="s5">—</p></div></li>
+        <li data-step="6"><i></i><div><b>Decide and act</b><p id="s6">—</p></div></li>
+        <li data-step="7"><i></i><div><b>Verify the fix</b><p id="s7">—</p></div></li>
+        <li data-step="8"><i></i><div><b>Learn</b><p id="s8">—</p></div></li>
+      </ol>
+
+      <div class="inc-foot">
+        <span id="inc-ms">—</span>
+        <span id="inc-tokens">—</span>
+      </div>
+    </div>
+
+    <!-- what the agent is doing right now, per service call -->
+    <div class="activity" id="activity-box">
+      <div class="act-head">
+        <h2>Service activity</h2>
+        <span class="dim-note">every call the agent makes, live</span>
+      </div>
+      <ul class="calls" id="calls"></ul>
+    </div>
+
+    <div id="empty" class="empty">
+      <p>Press <b>Run incidents</b> to start the pipeline jobs.</p>
+      <p class="dim">Each job runs as a real subprocess. When one exits non&#8209;zero,
+         the agent wakes up here.</p>
+    </div>
+  </section>
+
+  <!-- RIGHT: the curve -->
+  <section class="panel curve">
+    <h2>Compounding curve</h2>
+    <div class="kpis">
+      <div class="kpi"><span>resolved</span><b id="k-resolved">0/0</b></div>
+      <div class="kpi"><span>speedup</span><b id="k-speedup">—</b></div>
+      <div class="kpi"><span>tokens saved</span><b id="k-saved">0</b></div>
+    </div>
+    <div id="bars" class="bars"></div>
+    <table class="runs">
+      <thead><tr><th>#</th><th>table</th><th>mode</th><th>ms</th><th>tokens</th></tr></thead>
+      <tbody id="runs"></tbody>
+    </table>
+    <p class="footnote" id="footnote"></p>
+  </section>
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
