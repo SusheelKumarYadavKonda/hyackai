@@ -84,11 +84,19 @@ async def _check_cognee() -> None:
     if config.USE_STUB_COGNEE:
         check("cognee", True, "stub mode")
         return
+
+    cloud = bool(config.COGNEE_API_KEY and config.COGNEE_BASE_URL)
+    if not cloud and not config.OPENAI_API_KEY:
+        check("cognee", False,
+              "set COGNEE_API_KEY + COGNEE_BASE_URL (cloud) or OPENAI_API_KEY (local)")
+        return
+
     try:
         from adapters import cognee_adapter
 
         adapter = cognee_adapter.build(config.CORPUS_DIR)
-        check("cognee", True, f"client ready ({adapter.name})")
+        await adapter._ensure_served()
+        check("cognee", True, "cloud tenant attached" if cloud else "local mode")
     except Exception as exc:  # noqa: BLE001
         check("cognee", False, f"{type(exc).__name__}: {exc}")
 

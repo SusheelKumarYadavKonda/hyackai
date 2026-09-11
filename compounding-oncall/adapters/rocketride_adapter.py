@@ -14,6 +14,7 @@ plaintext. We reject the downgrade rather than connecting insecurely.
 
 import asyncio
 import json
+import re
 import time
 
 from adapters.contracts import Decision, Diagnostics, GraphContext, Incident
@@ -45,20 +46,79 @@ def _reason(incident: Incident, ctx: GraphContext, diag: Diagnostics) -> tuple[s
 
     diagnosis = f"{table} failed: {diag['detail']}. Probable cause: {cause}."
 
-    if diag["failed_check"] == "null_rate_delta":
-        action = "quarantine_partition"
-    elif diag["failed_check"] == "volume_floor":
-        action = "quarantine_partition"
-    else:
-        action = "open_ticket"
+    # Action selection, in precedence order. The point of the ordering is that
+    # written-down organisational knowledge outranks our built-in heuristic:
+    #
+    #   1. a fix this agent has already applied successfully (HydraDB)
+    #   2. a fix the runbooks prescribe                      (Cognee)
+    #   3. the default rule keyed off the failed diagnostic
+    #
+    # Without 1 and 2, the recall layers are decorative -- retrieved, printed,
+    # and ignored. This is what makes them load-bearing.
+    action, rationale = _default_action(diag)
+
+    prescribed = _action_from_corpus(ctx["corpus_recall"])
+    if prescribed:
+        action, rationale = prescribed, "prescribed by runbook recall (cognee)"
+
+    proven = _action_from_past_fixes(ctx["past_fixes"])
+    if proven:
+        action, rationale = proven, "matches a fix we have already applied (hydradb)"
+
+    diagnosis = f"{diagnosis} Action {action} {rationale}."
 
     params = {
         "table": table,
         "partition": incident["run_ts"][:10],
         "notify": owner,
         "job_id": incident["job_id"],
+        "rationale": rationale,
     }
     return diagnosis, action, params
+
+
+# Phrases that indicate a prescribed action in prose. Matched against recalled
+# runbook and postmortem text, not against the error.
+CORPUS_ACTION_CUES: list[tuple[str, str]] = [
+    ("quarantine_partition", r"quarantin"),
+    ("rerun_job", r"rerun|re-run|reprocess"),
+    ("open_ticket", r"open a ticket|raise a ticket|file a ticket"),
+]
+
+VALID_ACTIONS = {"quarantine_partition", "rerun_job", "open_ticket"}
+
+
+def _default_action(diag: Diagnostics) -> tuple[str, str]:
+    """Fallback heuristic, keyed off which diagnostic failed."""
+    if diag["failed_check"] in ("null_rate_delta", "volume_floor"):
+        return "quarantine_partition", "selected by diagnostic rule"
+    return "open_ticket", "selected by diagnostic rule (no check failed)"
+
+
+def _action_from_corpus(recall: list[dict]) -> str | None:
+    """Extract a prescribed action from recalled prose.
+
+    Scans the highest-scoring excerpts for an action the documents actually
+    recommend. Returns None when the corpus says nothing actionable, so the
+    default rule stands rather than being overridden by noise.
+    """
+    if not recall:
+        return None
+
+    blob = " ".join(str(doc.get("excerpt", "")) for doc in recall[:3]).lower()
+    for action, pattern in CORPUS_ACTION_CUES:
+        if re.search(pattern, blob):
+            return action
+    return None
+
+
+def _action_from_past_fixes(fixes: list[dict]) -> str | None:
+    """Prefer an action that has already worked, ranked by success count."""
+    ranked = [
+        f for f in sorted(fixes, key=lambda f: -int(f.get("success_count") or 0))
+        if f.get("action") in VALID_ACTIONS
+    ]
+    return ranked[0]["action"] if ranked else None
 
 
 def _estimate_tokens(incident: Incident, ctx: GraphContext, diag: Diagnostics) -> int:

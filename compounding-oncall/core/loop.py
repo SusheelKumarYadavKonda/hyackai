@@ -143,7 +143,9 @@ class Agent:
 
             # 6 decide + act
             decision = await self.orchestrator.decide_and_act(incident, ctx, diagnostics)
-            self._say(f"      action: {decision['action']} via {' -> '.join(decision['chain'])}")
+            rationale = decision["params"].get("rationale", "")
+            self._say(f"      action: {decision['action']} ({rationale})")
+            self._say(f"      chain:  {' -> '.join(decision['chain'])}")
 
         # 7 verify -- the real job, again
         passed, exit_code, detail = await supervisor.verify(table)

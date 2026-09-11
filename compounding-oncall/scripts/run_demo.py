@@ -103,6 +103,15 @@ async def main() -> int:
         )
         await agent.run_incident(item["table"], run_no)
 
+    # Release the tenant connection before printing, so aiohttp does not warn
+    # about an unclosed session after the summary.
+    close = getattr(corpus, "close", None)
+    if close:
+        try:
+            await close()
+        except Exception:  # noqa: BLE001 - teardown must never fail a clean run
+            pass
+
     print()
     metrics.print_table()
     metrics.print_summary()

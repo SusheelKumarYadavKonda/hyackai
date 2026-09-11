@@ -61,6 +61,15 @@ results = await cognee.search(
 - Pruning: `await cognee.prune.prune_data()`, `await cognee.prune.prune_system(graph=True, vector=True)`
 - **`cognify()` calls an LLM per document.** 30 docs is minutes and real tokens. Run in background.
 
+**Verified against a live hosted tenant (cognee 1.5.4):**
+- **No OpenAI key needed in cloud mode.** `await cognee.serve(url=..., api_key=...)` attaches the SDK to a hosted tenant and extraction runs on their infrastructure. `OPENAI_API_KEY` is only for local open-source mode.
+- **`datasets` must be a LIST against a hosted tenant.** Passing the bare string is accepted locally but the remote API returns `422 {"detail":[{"type":"list_type","loc":["body","datasets"],"msg":"Input should be a valid list"}]}`. Applies to both `search()` and `cognify()`.
+- **The hosted response is wrapped per dataset:** `[{dataset_id, dataset_name, dataset_tenant_id, search_result: [...]}]`. The prose lives in `search_result`. Unwrap it, or callers get raw JSON as the excerpt.
+- Verify credentials before wiring: `curl $URL/health` (expect 200) and `curl $URL/api/v1/datasets/ -H "X-Api-Key: $KEY"` (200 = good, 401 = bad key, 404/5xx = wrong URL).
+- `GRAPH_COMPLETION` needs a built graph; it fails before `cognify()` completes. Fall back to `SearchType.CHUNKS` so recall degrades instead of blocking an incident.
+- Call `await cognee.disconnect()` at shutdown or aiohttp warns about an unclosed session.
+- Timings on 12 short documents: ingest ~9s total, `GRAPH_COMPLETION` recall ~9-17s per query.
+
 ## HydraDB
 
 Docs: <https://docs.hydradb.com/AGENTS> (LLM-facing guide — the authoritative one)

@@ -59,6 +59,12 @@ HYDRA_DATABASE = os.environ.get("HYDRA_DATABASE", "compounding_oncall")
 HYDRA_COLLECTION = os.environ.get("HYDRA_COLLECTION", "incidents")
 COGNEE_DATASET = os.environ.get("COGNEE_DATASET", "oncall_corpus")
 
+# Cognee Cloud. When both are set the adapter calls cognee.serve() and the hosted
+# tenant performs LLM extraction, so no OPENAI_API_KEY is needed. Falling back to
+# local/OSS mode is what requires an LLM provider of our own.
+COGNEE_API_KEY = os.environ.get("COGNEE_API_KEY", "")
+COGNEE_BASE_URL = os.environ.get("COGNEE_BASE_URL", "")
+
 # Cost model for the metrics table. Approximate and clearly labelled as such.
 COST_PER_1K_TOKENS = float(os.environ.get("COST_PER_1K_TOKENS", "0.0045"))
 
