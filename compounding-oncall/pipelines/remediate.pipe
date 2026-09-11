@@ -1,0 +1,23 @@
+{
+  "name": "oncall-remediate",
+  "description": "Receives an incident decision and returns the executed remediation chain. Entry point is a webhook lane; the response echoes the structured result the agent records.",
+  "version": 1,
+  "source": "incident_in",
+  "components": [
+    {
+      "id": "incident_in",
+      "provider": "webhook",
+      "name": "Incident decision",
+      "description": "JSON payload: incident, diagnosis, proposed_action, params, chain step.",
+      "config": {}
+    },
+    {
+      "id": "remediation_out",
+      "provider": "response",
+      "name": "Remediation result",
+      "description": "Returns the payload so the agent can record what executed.",
+      "config": { "laneName": "text" },
+      "input": [{ "lane": "text", "from": "incident_in" }]
+    }
+  ]
+}

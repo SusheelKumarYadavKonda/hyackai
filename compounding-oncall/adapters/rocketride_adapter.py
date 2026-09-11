@@ -16,6 +16,7 @@ import asyncio
 import json
 import re
 import time
+from pathlib import Path
 
 from adapters.contracts import Decision, Diagnostics, GraphContext, Incident
 from core import config
@@ -173,7 +174,11 @@ class RocketRideReal:
         from rocketride import RocketRideClient
 
         self._client_cls = RocketRideClient
-        self._pipeline_path = pipeline_path
+        # A .pipe file is plain JSON, so the pipeline is version-controlled in
+        # this repo rather than authored in the IDE extension. We load and pass
+        # it as a dict, which use() accepts directly.
+        self._pipeline_path = pipeline_path or str(config.ROCKETRIDE_PIPELINE)
+        self._pipeline = self._load_pipeline()
         self._uri = config.ROCKETRIDE_URI
 
         if not self._uri.startswith(("https://", "wss://")):
@@ -182,6 +187,12 @@ class RocketRideReal:
                 "and bare host:port silently downgrade to an unencrypted "
                 "connection. Use https:// or wss://."
             )
+
+    def _load_pipeline(self) -> dict | None:
+        path = Path(self._pipeline_path)
+        if not path.exists():
+            return None
+        return json.loads(path.read_text())
 
     async def decide_and_act(self, incident, ctx, diag) -> Decision:
         diagnosis, action, params = _reason(incident, ctx, diag)
@@ -203,7 +214,12 @@ class RocketRideReal:
             async with self._client_cls(
                 uri=self._uri, auth=config.ROCKETRIDE_APIKEY
             ) as client:
-                result = await client.use(filepath=self._pipeline_path)
+                # Pass the pipeline inline when we have it, so the engine does
+                # not need to resolve a path on its own filesystem.
+                if self._pipeline is not None:
+                    result = await client.use(pipeline=self._pipeline)
+                else:
+                    result = await client.use(filepath=self._pipeline_path)
                 token = result["token"]
                 try:
                     for step in CHAIN:

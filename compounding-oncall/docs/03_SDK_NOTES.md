@@ -195,7 +195,15 @@ async with RocketRideClient(uri="https://cloud.rocketride.ai", auth=key) as clie
 - `get_task_status(token)` → `completedCount`, `totalCount`, `completed`, `state`.
 - `set_events(token, [...])` + `on_event` callback for progress.
 - Exceptions: `DAPException` → `RocketRideException` → {`ConnectionException` → `AuthenticationException`, `PipeException`, `ExecutionException`, `ValidationException`}. Branch on `e.code` (e.g. `TASK_NOT_REGISTERED`), never on message text. `e.hint` is developer-only detail.
-- Docs reference `cloud.rocketride.ai`; `01_GROUND.md` says `staging.rocketride.ai`. **Verify which the account is on.**
+- Docs reference `cloud.rocketride.ai`; `01_GROUND.md` says `staging.rocketride.ai`. **We are on staging.**
+
+**Verified against the live staging engine:**
+- **No IDE extension needed.** A `.pipe` file is plain JSON per the [pipeline reference](https://docs.rocketride.org/pipeline-reference), and `use(pipeline={...})` takes a dict, so the pipeline lives in this repo at `pipelines/remediate.pipe` and is version-controlled.
+- A minimal two-component pipeline validates and runs: `webhook` (source) → `response` (`config.laneName = "text"`, `input: [{lane, from}]`). The engine enriches config on validate (adds `mode: "Source"` to the webhook) and bumps `version`.
+- `client.validate(pipeline)` returns the normalised pipeline rather than a pass/fail flag — inspect the echoed JSON to confirm the engine understood your components.
+- `get_connection_info()` confirms the negotiated transport: `https://staging.rocketride.ai` resolves to `wss://staging.rocketride.ai/task/service`.
+- Lifecycle per incident: `use(pipeline=...)` → `token`, then one `send()` per chain step, then `terminate(token)` in a `finally`. Skipping terminate leaks server-side tasks.
+- Three `send()` calls plus connection setup cost roughly 10-12s per cold incident, which is real orchestration latency the warm path skips entirely.
 
 ---
 

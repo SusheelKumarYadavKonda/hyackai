@@ -53,6 +53,9 @@ HOTDATA_API_KEY = os.environ.get("HOTDATA_API_KEY", "")
 HOTDATA_WORKSPACE_ID = os.environ.get("HOTDATA_WORKSPACE_ID", "")
 ROCKETRIDE_URI = os.environ.get("ROCKETRIDE_URI", "https://cloud.rocketride.ai")
 ROCKETRIDE_APIKEY = os.environ.get("ROCKETRIDE_APIKEY", "")
+# The remediation pipeline lives in this repo as plain JSON, so it is reviewable
+# and version-controlled rather than only existing in the IDE extension.
+ROCKETRIDE_PIPELINE = REPO_ROOT / "pipelines" / "remediate.pipe"
 
 # Namespacing for the hosted memory layers.
 HYDRA_DATABASE = os.environ.get("HYDRA_DATABASE", "compounding_oncall")
