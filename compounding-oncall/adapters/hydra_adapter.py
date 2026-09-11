@@ -71,9 +71,12 @@ class HydraReal:
     name = "hydradb"
 
     def __init__(self):
-        from hydra_db import HydraDB
+        # The package is `hydra_db` and the kwarg is `token`. The dashboard
+        # snippet showing `from hydradb import HydraDB` with `api_key=` does not
+        # match the published SDK; verified against the installed package.
+        from hydra_db import AsyncHydraDB
 
-        self._client = HydraDB(token=config.HYDRA_DB_API_KEY)
+        self._client = AsyncHydraDB(token=config.HYDRA_DB_API_KEY)
         self._database = config.HYDRA_DATABASE
         self._collection = config.HYDRA_COLLECTION
         self._written = 0
@@ -131,14 +134,22 @@ class HydraReal:
         return {"past_fixes": fixes[:3], "node_count": await self.count()}
 
     async def count(self) -> int:
+        """Accumulated memories, read from the live database.
+
+        Verified shape: data.memory_collection.row_count (a
+        TenantsTenantStatsResponse, alongside knowledge_collection). This is the
+        number that visibly grows across the demo run.
+        """
         try:
             stats = await self._call(
                 self._client.databases.stats, database=self._database
             )
-            counts = _dig(stats, "data") or {}
-            for key in ("memories", "memory_count", "total"):
-                if _get(counts, key) is not None:
-                    return int(_get(counts, key))
+            count = _dig(stats, "data", "memory_collection", "row_count")
+            if count is not None:
+                # Take the larger of the server count and what we have written.
+                # Indexing lags a write by a few seconds, so reporting the raw
+                # server figure mid-run would show the count going backwards.
+                return max(int(count), self._written)
         except Exception:  # noqa: BLE001 - stats is nice-to-have, never fatal
             pass
         return self._written
@@ -148,7 +159,15 @@ class HydraReal:
     async def write_resolution(
         self, sig, table, action, diagnosis, incident_id, ms
     ) -> None:
-        """Write the outcome as a memory. `memories` must be a JSON string."""
+        """Write the outcome as a memory. `memories` must be a JSON string.
+
+        Indexing is async: a freshly written memory takes a few seconds to reach
+        `graph_creation` before it is searchable. We deliberately do not block
+        the loop waiting for it -- the incident is already resolved, and muscle
+        memory (not HydraDB) is what makes the next identical failure fast.
+        HydraDB is the durable record, so eventual visibility is the right
+        trade for keeping incident latency honest.
+        """
         memory = {
             "id": f"incident_{incident_id}",
             "title": f"{sig} resolved on {table}",
@@ -180,11 +199,11 @@ class HydraReal:
 
     @staticmethod
     async def _call(fn, **kwargs):
-        """The SDK ships sync and async clients. Support both without assuming."""
+        """AsyncHydraDB returns coroutines, but tolerate a sync client too."""
         result = fn(**kwargs)
         if asyncio.iscoroutine(result):
             return await result
-        return await asyncio.to_thread(lambda: result)
+        return result
 
 
 def _get(obj, key):

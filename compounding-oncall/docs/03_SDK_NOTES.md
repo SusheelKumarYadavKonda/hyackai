@@ -104,6 +104,15 @@ Gotchas that cost real time:
 
 Response shape: `.data.chunks[]`, `.data.sources[]`, `.data.graph_context{query_paths, chunk_relations}`. Preserve server ordering of `chunks`.
 
+**Verified against the live API (not just docs):**
+- **The dashboard snippet is wrong.** It shows `from hydradb import HydraDB` with `api_key=`. The installed package is `hydra_db` and the kwarg is `token=`. There is no `hydradb` module.
+- Use **`AsyncHydraDB`** — a native async client exists, so no thread wrapping is needed. `HydraDB` is the sync equivalent.
+- `databases.stats()` returns a `TenantsTenantStatsResponse`: the memory count is at **`data.memory_collection.row_count`**, alongside `knowledge_collection.row_count`. Keys like `memories` / `memory_count` / `total` do not exist.
+- **Indexing lag is real and matters.** A memory written via `context.ingest` is not immediately searchable — `context.status` reports `graph_creation` after a few seconds, and only then does `query` return it. A recall issued immediately after a write returns zero chunks. Do not block the loop waiting; treat HydraDB as the durable record and let visibility be eventual.
+- Because of that lag, `count()` returns `max(server_count, written_count)` so the accumulating-memory figure never appears to go backwards mid-run.
+- `additional_metadata` survives the round trip intact and comes back as a plain dict on each chunk.
+- `context.delete(type="memory", database=..., ids=[...])` works for cleanup.
+
 ## hotdata.dev
 
 Docs: <https://www.hotdata.dev/docs/python-sdk> · <https://www.hotdata.dev/docs/quick-start>
